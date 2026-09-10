@@ -90,4 +90,5 @@ De derecha a izquierda:
 
 • Pantalla de administrador
 
-<img width="2195" height="812" alt="Diseño App" src="https://github.com/user-attachments/assets/848305a4-d1ae-41a0-bd3f-348df72470c6" />
+<img width="2195" height="812" alt="Diseño App" src="https://github.com/user-attachments/assets/b5fdd667-b35e-489d-944d-c7675ad90869" />
+
