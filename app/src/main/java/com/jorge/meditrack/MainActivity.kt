@@ -31,8 +31,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.jorge.meditrack.ui.theme.MediTrackTheme
@@ -67,8 +67,101 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MediTrackTheme {
-                PantallaPrincipal()
+                MediTrackApp()
             }
+        }
+    }
+}
+
+
+// ============================================================
+// CONTROL GENERAL DE LA APLICACIÓN
+// ============================================================
+
+@Composable
+fun MediTrackApp() {
+
+    // Lista general de medicamentos
+    var medicamentos by remember {
+        mutableStateOf(listOf<Medicamento>())
+    }
+
+    // Pantalla actual
+    var pantallaActual by remember {
+        mutableStateOf("inicio")
+    }
+
+
+    when (pantallaActual) {
+
+        // ----------------------------------------------------
+        // INICIO
+        // ----------------------------------------------------
+
+        "inicio" -> {
+
+            PantallaPrincipal(
+
+                medicamentos = medicamentos,
+
+                onAgregar = {
+                    pantallaActual = "agregar"
+                },
+
+                onVerMedicamentos = {
+                    pantallaActual = "lista"
+                }
+            )
+        }
+
+
+        // ----------------------------------------------------
+        // LISTA DE MEDICAMENTOS
+        // ----------------------------------------------------
+
+        "lista" -> {
+
+            PantallaListaMedicamentos(
+
+                medicamentos = medicamentos,
+
+                onVolver = {
+                    pantallaActual = "inicio"
+                },
+
+                onAgregar = {
+                    pantallaActual = "agregar"
+                },
+
+                onEliminar = { medicamento ->
+
+                    medicamentos = medicamentos.filter {
+                        it != medicamento
+                    }
+                }
+            )
+        }
+
+
+        // ----------------------------------------------------
+        // AGREGAR MEDICAMENTO
+        // ----------------------------------------------------
+
+        "agregar" -> {
+
+            PantallaAgregarMedicamento(
+
+                onVolver = {
+                    pantallaActual = "inicio"
+                },
+
+                onGuardar = { nuevoMedicamento ->
+
+                    medicamentos = medicamentos + nuevoMedicamento
+
+                    pantallaActual = "lista"
+                }
+            )
         }
     }
 }
@@ -79,178 +172,227 @@ class MainActivity : ComponentActivity() {
 // ============================================================
 
 @Composable
-fun PantallaPrincipal() {
+fun PantallaPrincipal(
+    medicamentos: List<Medicamento>,
+    onAgregar: () -> Unit,
+    onVerMedicamentos: () -> Unit
+) {
 
-    // Lista de medicamentos registrados
-    var medicamentos by remember {
-        mutableStateOf(listOf<Medicamento>())
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+
+        // ----------------------------------------------------
+        // TÍTULO
+        // ----------------------------------------------------
+
+        Text(
+            text = "MediTrack",
+            style = MaterialTheme.typography.headlineLarge
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Control de medicamentos",
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+
+        // ----------------------------------------------------
+        // PRÓXIMA TOMA
+        // ----------------------------------------------------
+
+        Text(
+            text = "Próxima toma",
+            style = MaterialTheme.typography.titleLarge
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+
+        if (medicamentos.isEmpty()) {
+
+            Text(
+                text = "💊 No hay medicamentos registrados todavía"
+            )
+
+        } else {
+
+            val proximo = medicamentos.first()
+
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+
+                    Text(
+                        text = "💊 ${proximo.nombre}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "${proximo.dosis} ${proximo.unidad}"
+                    )
+
+                    Text(
+                        text = "Hora: ${proximo.hora}"
+                    )
+
+                    Text(
+                        text = proximo.frecuencia
+                    )
+                }
+            }
+        }
+
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+
+        // ----------------------------------------------------
+        // BOTÓN LISTA
+        // ----------------------------------------------------
+
+        OutlinedButton(
+            onClick = onVerMedicamentos,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Ver mis medicamentos")
+        }
+
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+
+        // ----------------------------------------------------
+        // BOTÓN AGREGAR
+        // ----------------------------------------------------
+
+        Button(
+            onClick = onAgregar,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Agregar medicamento")
+        }
     }
+}
 
-    // Controla si mostramos el formulario
-    var mostrarFormulario by remember {
-        mutableStateOf(false)
-    }
 
-    if (mostrarFormulario) {
+// ============================================================
+// PANTALLA LISTA DE MEDICAMENTOS
+// ============================================================
 
-        PantallaAgregarMedicamento(
+@Composable
+fun PantallaListaMedicamentos(
+    medicamentos: List<Medicamento>,
+    onVolver: () -> Unit,
+    onAgregar: () -> Unit,
+    onEliminar: (Medicamento) -> Unit
+) {
 
-            // Cuando presionamos "volver"
-            onVolver = {
-                mostrarFormulario = false
-            },
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+    ) {
 
-            // Cuando guardamos un medicamento
-            onGuardar = { nuevoMedicamento ->
 
-                medicamentos = medicamentos + nuevoMedicamento
+        // ----------------------------------------------------
+        // ENCABEZADO
+        // ----------------------------------------------------
 
-                mostrarFormulario = false
+        Text(
+            text = "← Mis medicamentos",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.clickable {
+                onVolver()
             }
         )
 
-    } else {
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp)
+
+        Text(
+            text = "Lista de medicamentos",
+            style = MaterialTheme.typography.titleLarge
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+
+        // ----------------------------------------------------
+        // LISTA
+        // ----------------------------------------------------
+
+        if (medicamentos.isEmpty()) {
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+
+                Text(
+                    text = "💊"
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "No hay medicamentos registrados."
+                )
+            }
+
+        } else {
+
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                items(medicamentos) { medicamento ->
+
+                    TarjetaMedicamento(
+                        medicamento = medicamento,
+
+                        onEliminar = {
+                            onEliminar(medicamento)
+                        }
+                    )
+                }
+            }
+        }
+
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+
+        // ----------------------------------------------------
+        // AGREGAR
+        // ----------------------------------------------------
+
+        Button(
+            onClick = onAgregar,
+            modifier = Modifier.fillMaxWidth()
         ) {
 
-            // ------------------------------------------------
-            // TÍTULO
-            // ------------------------------------------------
-
-            Text(
-                text = "MediTrack",
-                style = MaterialTheme.typography.headlineLarge
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Control de medicamentos",
-                style = MaterialTheme.typography.bodyLarge
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-
-            // ------------------------------------------------
-            // SECCIÓN PRÓXIMA TOMA
-            // ------------------------------------------------
-
-            Text(
-                text = "Próxima toma",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            if (medicamentos.isEmpty()) {
-
-                Text(
-                    text = "💊 No hay medicamentos registrados todavía"
-                )
-
-            } else {
-
-                // Por ahora mostramos el primer medicamento
-                // como la próxima toma.
-                val proximo = medicamentos.first()
-
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-
-                        Text(
-                            text = "💊 ${proximo.nombre}",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Text(
-                            text = "${proximo.dosis} ${proximo.unidad}"
-                        )
-
-                        Text(
-                            text = "Hora: ${proximo.hora}"
-                        )
-
-                        Text(
-                            text = proximo.frecuencia
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-
-            // ------------------------------------------------
-            // LISTA DE MEDICAMENTOS
-            // ------------------------------------------------
-
-            Text(
-                text = "Mis medicamentos",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-
-            if (medicamentos.isEmpty()) {
-
-                Text(
-                    text = "Aquí aparecerán los medicamentos que agregues."
-                )
-
-            } else {
-
-                // Lista desplazable de medicamentos
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-
-                    items(medicamentos) { medicamento ->
-
-                        TarjetaMedicamento(
-                            medicamento = medicamento,
-
-                            // Eliminar medicamento
-                            onEliminar = {
-
-                                medicamentos = medicamentos.filter {
-                                    it != medicamento
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-
-            // ------------------------------------------------
-            // BOTÓN AGREGAR
-            // ------------------------------------------------
-
-            Button(
-                onClick = {
-                    mostrarFormulario = true
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Agregar medicamento")
-            }
+            Text("Agregar medicamento")
         }
     }
 }
@@ -288,38 +430,46 @@ fun TarjetaMedicamento(
                 text = "Dosis: ${medicamento.dosis} ${medicamento.unidad}"
             )
 
+
             // Hora
             Text(
                 text = "Hora: ${medicamento.hora}"
             )
+
 
             // Frecuencia
             Text(
                 text = "Frecuencia: ${medicamento.frecuencia}"
             )
 
+
             // Fecha de inicio
             if (medicamento.fechaInicio.isNotBlank()) {
+
                 Text(
                     text = "Inicio: ${medicamento.fechaInicio}"
                 )
             }
 
+
             // Fecha final
             if (medicamento.fechaFinalizacion.isNotBlank()) {
+
                 Text(
                     text = "Finalización: ${medicamento.fechaFinalizacion}"
                 )
             }
 
+
             Spacer(modifier = Modifier.height(12.dp))
 
 
-            // Botón eliminar
+            // Eliminar
             OutlinedButton(
                 onClick = onEliminar,
                 modifier = Modifier.fillMaxWidth()
             ) {
+
                 Text("Eliminar")
             }
         }
@@ -341,7 +491,7 @@ fun PantallaAgregarMedicamento(
 
 
     // --------------------------------------------------------
-    // VARIABLES DEL FORMULARIO
+    // VARIABLES
     // --------------------------------------------------------
 
     var nombre by remember {
@@ -393,13 +543,12 @@ fun PantallaAgregarMedicamento(
         "Cada 12 horas",
         "Cada 8 horas",
         "Cada 6 horas",
-        "Una vez al día",
         "Días alternos"
     )
 
 
     // --------------------------------------------------------
-    // ESTADO DE MENÚS
+    // MENÚS
     // --------------------------------------------------------
 
     var unidadExpandida by remember {
@@ -412,7 +561,7 @@ fun PantallaAgregarMedicamento(
 
 
     // --------------------------------------------------------
-    // CONTENIDO
+    // FORMULARIO
     // --------------------------------------------------------
 
     Column(
@@ -421,6 +570,7 @@ fun PantallaAgregarMedicamento(
             .verticalScroll(rememberScrollState())
             .padding(24.dp)
     ) {
+
 
         // ----------------------------------------------------
         // VOLVER
@@ -459,7 +609,7 @@ fun PantallaAgregarMedicamento(
 
 
         // ----------------------------------------------------
-        // DOSIS Y UNIDAD
+        // DOSIS
         // ----------------------------------------------------
 
         Text(
@@ -469,11 +619,11 @@ fun PantallaAgregarMedicamento(
 
         Spacer(modifier = Modifier.height(8.dp))
 
+
         Row(
             modifier = Modifier.fillMaxWidth()
         ) {
 
-            // Cantidad
             OutlinedTextField(
                 value = dosis,
                 onValueChange = {
@@ -535,6 +685,7 @@ fun PantallaAgregarMedicamento(
             }
         }
 
+
         Spacer(modifier = Modifier.height(16.dp))
 
 
@@ -548,6 +699,7 @@ fun PantallaAgregarMedicamento(
         )
 
         Spacer(modifier = Modifier.height(8.dp))
+
 
         Box(
             modifier = Modifier.fillMaxWidth()
@@ -600,6 +752,7 @@ fun PantallaAgregarMedicamento(
             )
         }
 
+
         Spacer(modifier = Modifier.height(16.dp))
 
 
@@ -613,6 +766,7 @@ fun PantallaAgregarMedicamento(
         )
 
         Spacer(modifier = Modifier.height(8.dp))
+
 
         Box(
             modifier = Modifier.fillMaxWidth()
@@ -656,6 +810,7 @@ fun PantallaAgregarMedicamento(
             }
         }
 
+
         Spacer(modifier = Modifier.height(16.dp))
 
 
@@ -669,6 +824,7 @@ fun PantallaAgregarMedicamento(
         )
 
         Spacer(modifier = Modifier.height(8.dp))
+
 
         Box(
             modifier = Modifier.fillMaxWidth()
@@ -724,8 +880,6 @@ fun PantallaAgregarMedicamento(
                                 fechaInicioMillis =
                                     fechaSeleccionada.timeInMillis
 
-                                // Si cambiamos la fecha de inicio,
-                                // limpiamos la fecha final.
                                 fechaFinalizacion = ""
                             },
                             calendario.get(Calendar.YEAR),
@@ -736,11 +890,12 @@ fun PantallaAgregarMedicamento(
             )
         }
 
+
         Spacer(modifier = Modifier.height(16.dp))
 
 
         // ----------------------------------------------------
-        // FECHA DE FINALIZACIÓN
+        // FECHA FINAL
         // ----------------------------------------------------
 
         Text(
@@ -749,6 +904,7 @@ fun PantallaAgregarMedicamento(
         )
 
         Spacer(modifier = Modifier.height(8.dp))
+
 
         Box(
             modifier = Modifier.fillMaxWidth()
@@ -788,8 +944,6 @@ fun PantallaAgregarMedicamento(
                             calendario.get(Calendar.DAY_OF_MONTH)
                         ).apply {
 
-                            // La fecha final no puede ser
-                            // anterior a la fecha inicial.
                             fechaInicioMillis?.let {
                                 datePicker.minDate = it
                             }
@@ -798,6 +952,7 @@ fun PantallaAgregarMedicamento(
                     }
             )
         }
+
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -809,7 +964,6 @@ fun PantallaAgregarMedicamento(
         Button(
             onClick = {
 
-                // Validamos los campos principales
                 if (
                     nombre.isBlank() ||
                     dosis.isBlank() ||
@@ -824,7 +978,6 @@ fun PantallaAgregarMedicamento(
 
                 } else {
 
-                    // Creamos el medicamento
                     val medicamento = Medicamento(
                         nombre = nombre,
                         dosis = dosis,
@@ -835,8 +988,6 @@ fun PantallaAgregarMedicamento(
                         fechaFinalizacion = fechaFinalizacion
                     )
 
-                    // Enviamos el medicamento a la
-                    // pantalla principal
                     onGuardar(medicamento)
 
                     Toast.makeText(
