@@ -92,3 +92,43 @@ De derecha a izquierda:
 
 <img width="2195" height="812" alt="Diseño App" src="https://github.com/user-attachments/assets/b5fdd667-b35e-489d-944d-c7675ad90869" />
 
+## Registro de cambios (Changelog)
+
+Esta sección presenta las actualizaciones realizadas, las mejoras que se encuentran actualmente en desarrollo y las funcionalidades que se tienen previstas para las siguientes etapas del proyecto MediTrack.
+
+### Cambios pasados
+
+* Se definió el concepto general de MediTrack como una aplicación móvil para el control y recordatorio de medicamentos.
+* Se establecieron los datos principales que podrá registrar el usuario: nombre del medicamento, dosis, unidad, hora, frecuencia, fecha de inicio y fecha de finalización.
+* Se diseñó la estructura inicial de las pantallas de la aplicación mediante wireframes.
+* Se configuró el proyecto en Android Studio utilizando Kotlin y Jetpack Compose.
+* Se estableció el nombre del proyecto como MediTrack y el paquete de la aplicación como `com.jorge.meditrack`.
+* Se configuró el proyecto para utilizar como versión mínima Android 7.0 (API 24).
+* Se creó la primera versión de la pantalla principal, incluyendo el nombre de la aplicación, la sección de próxima toma y el botón para agregar medicamentos.
+* Se desarrolló la pantalla para agregar medicamentos.
+* Se incorporaron selectores para la hora y las fechas de inicio y finalización.
+* Se incorporaron opciones para seleccionar la unidad del medicamento y la frecuencia de administración.
+* Se implementó la validación básica de los campos principales antes de guardar un medicamento.
+* Se implementó el registro de varios medicamentos durante la ejecución de la aplicación.
+* Se creó una sección de "Mis medicamentos" para visualizar los medicamentos registrados.
+* Se agregó la opción de eliminar medicamentos de la lista.
+* Se creó un repositorio en GitHub para mantener un historial de las versiones y avances del proyecto.
+
+### Cambios actuales
+
+* Se está mejorando la estructura de navegación entre la pantalla principal, el formulario de registro y la lista de medicamentos.
+* Se está revisando la organización de las opciones de frecuencia para evitar alternativas que puedan resultar confusas para el usuario, como "Cada 24 horas" y "Una vez al día".
+* Se está trabajando en mantener una interfaz sencilla y fácil de utilizar, especialmente durante el registro y consulta de medicamentos.
+* Actualmente, los medicamentos se mantienen en memoria durante la ejecución de la aplicación. El almacenamiento permanente todavía se encuentra pendiente de implementación.
+
+### Cambios futuros
+
+* Implementar una base de datos local para almacenar permanentemente los medicamentos registrados.
+* Incorporar la edición de medicamentos existentes.
+* Desarrollar un historial de tomas que permita registrar medicamentos tomados, pendientes u omitidos.
+* Implementar notificaciones para recordar al usuario las horas programadas para cada medicamento.
+* Mejorar la lógica de las frecuencias para generar correctamente las próximas tomas según la configuración de cada medicamento.
+* Desarrollar la pantalla de administración para gestionar la información correspondiente al sistema.
+* Realizar pruebas de funcionamiento y usabilidad en diferentes dispositivos Android.
+* Mejorar progresivamente el diseño visual y la experiencia de usuario.
+* Completar la documentación técnica y preparar la versión final del proyecto para su presentación.
