@@ -1,134 +1,147 @@
-# Aplicación de control y recordatorio de medicamentos
+# MediTrack: Aplicación de control y recordatorio de medicamentos
 
-# Descripción del proyecto
+## 1. Descripción del proyecto
 
-El proyecto consiste en desarrollar una aplicación móvil que permita a los usuarios registrar y llevar un control básico de los medicamentos que deben tomar. La aplicación tendrá como objetivo principal ayudar a organizar los horarios y las dosis de los medicamentos, permitiendo consultar fácilmente la información y registrar si una dosis ya fue tomada o si quedó pendiente. El usuario podrá registrar información como el nombre del medicamento, la cantidad o dosis, la hora en que debe tomarlo, la frecuencia con la que debe hacerlo, la fecha de inicio y finalización, y algunas notas adicionales. De esta manera, toda la información relacionada con sus medicamentos podrá mantenerse organizada dentro de una misma aplicación. La aplicación estará enfocada en el recordatorio y registro de medicamentos, por lo que no tendrá como finalidad realizar diagnósticos, recomendar tratamientos ni sustituir las indicaciones proporcionadas por un profesional de la salud.
+MediTrack es una aplicación móvil para dispositivos Android desarrollada con Kotlin y Jetpack Compose. Su objetivo es ayudar a los usuarios a organizar sus medicamentos, consultar las dosis y horarios registrados, recibir recordatorios y llevar un historial básico de las tomas.
 
-# Exposición del problema
+La aplicación permite registrar información como el nombre del medicamento, la dosis, la unidad, la hora, la frecuencia y las fechas de inicio y finalización del tratamiento. Además, utiliza una base de datos local mediante Room para conservar la información registrada.
 
-Las personas que deben tomar medicamentos de manera periódica pueden tener dificultades para recordar los horarios, las dosis o si ya realizaron una determinada toma. Esta situación puede ser especialmente complicada cuando una persona utiliza varios medicamentos con diferentes horarios y frecuencias. Llevar esta información únicamente en la memoria, en notas escritas o en diferentes aplicaciones puede provocar confusión y dificultar el seguimiento de las tomas. Por esta razón, se propone desarrollar una aplicación que permita centralizar esta información y facilitar el seguimiento de los medicamentos. El usuario podrá consultar sus medicamentos registrados y conocer qué dosis debe tomar y en qué momento, además de registrar cada toma realizada. El propósito de la aplicación no será indicar al usuario qué medicamento debe utilizar, sino proporcionar una herramienta de organización y seguimiento basada en las indicaciones que ya haya recibido.
+MediTrack busca ofrecer una herramienta sencilla y accesible para facilitar la organización de los medicamentos y ayudar a los usuarios a recordar sus horarios.
 
-# Plataforma
-   
-La aplicación será diseñada principalmente para dispositivos móviles con sistema operativo Android. Para el desarrollo se considerará el uso de herramientas de desarrollo para aplicaciones móviles, seleccionando aquellas que permitan implementar de manera sencilla las funciones necesarias para el proyecto. Durante la primera etapa se priorizarán las funciones básicas y una interfaz sencilla, de manera que el proyecto pueda desarrollarse progresivamente. Posteriormente se podrán incorporar funciones adicionales como notificaciones, almacenamiento persistente e historial de las tomas. El código y los avances del proyecto serán administrados mediante GitHub, utilizando un repositorio para almacenar el proyecto y documentar su desarrollo. El archivo README será utilizado para presentar la descripción, objetivos, funcionalidades y características principales de la aplicación.
+## 2. Exposición del problema
 
-# Interfaz de usuario e interfaz de administrador
+Las personas que necesitan tomar medicamentos periódicamente pueden olvidar los horarios establecidos, confundir las dosis o tener dificultades para recordar si ya realizaron una toma. Estas situaciones pueden ser más frecuentes cuando deben organizar varios medicamentos con diferentes horarios y frecuencias.
 
-## Interfaz de usuario
+MediTrack propone una solución mediante una aplicación móvil que centraliza la información de los medicamentos, permite consultar los datos registrados y genera notificaciones para recordar los horarios programados. También contempla un historial básico que ayuda a revisar los registros de las tomas.
 
-La interfaz de usuario estará diseñada para ser sencilla y fácil de utilizar. La pantalla principal podrá mostrar los medicamentos registrados y las próximas dosis que deben tomarse. Entre las principales opciones de la interfaz estarán:
+De esta manera, el proyecto busca facilitar la organización personal y mejorar el acceso a la información relacionada con los medicamentos registrados.
 
-•	Registrar un nuevo medicamento.
+## 3. Plataforma y herramientas de desarrollo
 
-•	Consultar los medicamentos registrados.
+MediTrack se desarrolla para el sistema operativo Android utilizando las siguientes herramientas y tecnologías:
 
-•	Modificar la información de un medicamento.
+- **Android Studio:** entorno de desarrollo integrado utilizado para crear, ejecutar y probar la aplicación.
+- **Kotlin:** lenguaje de programación empleado para implementar la lógica de la aplicación.
+- **Jetpack Compose:** herramienta utilizada para construir la interfaz de usuario.
+- **Room:** biblioteca que permite almacenar y consultar los datos de los medicamentos y los registros de tomas mediante una base de datos local.
+- **GitHub:** plataforma utilizada para alojar el código fuente, documentar el proyecto y llevar un registro de sus cambios.
 
-•	Eliminar un medicamento.
+La aplicación tiene configurada una versión mínima de Android 7.0 (API 24). Las funciones básicas de almacenamiento no requieren un servidor externo, ya que la información se guarda localmente en el dispositivo.
 
-•	Consultar la dosis y horario correspondiente.
+## 4. Interfaz de usuario e interfaz de administrador
 
-•	Marcar una dosis como tomada.
+### 4.1. Interfaz de usuario
 
-•	Marcar una dosis como omitida.
+La interfaz de usuario está diseñada para facilitar el registro y la consulta de medicamentos mediante pantallas y formularios sencillos.
 
-•	Consultar un historial básico de las tomas realizadas.
+Entre las funciones contempladas se encuentran:
 
-El diseño buscará que la información más importante, como el nombre del medicamento, la dosis y el horario, pueda identificarse rápidamente.
+- Registrar medicamentos con su nombre, dosis y unidad.
+- Establecer la hora y la frecuencia de los recordatorios.
+- Registrar las fechas de inicio y finalización del tratamiento.
+- Consultar la lista de medicamentos guardados.
+- Recibir notificaciones de recordatorio.
+- Consultar el historial de tomas disponible.
 
-## Interfaz de administrador
+La intención es que el usuario pueda acceder a la información principal sin tener que navegar por menús complejos.
 
-La interfaz de administrador tendrá funciones diferentes a las del usuario común. Su propósito será permitir la administración básica de los usuarios y de algunos elementos generales de la aplicación. Entre sus posibles funciones estarán:
+### 4.2. Interfaz de administrador
 
-•	Consultar usuarios registrados.
+La interfaz de administrador se mantiene como una propuesta de ampliación del proyecto. En una versión futura podría incorporar herramientas para administrar configuraciones generales o gestionar usuarios, si estas funciones llegan a ser necesarias.
 
-•	Administrar las cuentas de los usuarios.
+La versión actual se concentra principalmente en las funciones destinadas al usuario y en el control básico de los medicamentos registrados.
 
-•	Gestionar categorías o unidades utilizadas por los medicamentos.  
+## 5. Funcionalidad de la aplicación
 
-•	Consultar información general relacionada con el funcionamiento de la aplicación.
+La versión actual de MediTrack incorpora las siguientes funcionalidades:
 
-Para la primera versión del proyecto, la interfaz de administrador se mantendrá sencilla, ya que la prioridad será desarrollar correctamente las funciones principales destinadas al usuario.
+1. **Registro de medicamentos:** permite introducir los datos principales de cada medicamento, incluidos el nombre, la dosis, la unidad, la hora, la frecuencia y las fechas del tratamiento.
+2. **Lista de medicamentos:** permite consultar los medicamentos registrados y acceder a su información.
+3. **Almacenamiento local:** utiliza Room para conservar los datos en la base de datos del dispositivo.
+4. **Recordatorios mediante notificaciones:** programa alarmas para mostrar avisos relacionados con los horarios registrados.
+5. **Historial de tomas:** dispone de una función para consultar los registros de tomas disponibles.
+6. **Gestión básica de medicamentos:** incluye las acciones de administración de registros que se encuentran implementadas en la interfaz.
 
-# Funcionalidad
+Las notificaciones y sus frecuencias todavía deben probarse en diferentes condiciones de uso, ya que el comportamiento de las alarmas puede verse afectado por las restricciones del sistema operativo y las configuraciones del dispositivo.
 
-La aplicación contará inicialmente con un sistema básico para registrar y controlar medicamentos. Al agregar un medicamento, el usuario deberá proporcionar la información necesaria, como nombre, dosis, unidad, horario y frecuencia. Una vez registrado, el medicamento aparecerá en la pantalla principal junto con la información correspondiente. Cuando llegue el momento indicado, la aplicación podrá mostrar un recordatorio para que el usuario registre si realizó la toma.
+MediTrack es un proyecto académico de organización personal. No proporciona diagnósticos ni recomendaciones médicas, y sus recordatorios no sustituyen las indicaciones de un profesional de la salud.
 
-Las funciones principales propuestas son:
+## 6. Diseño de la aplicación
 
-1. Registro de medicamentos: permite agregar nuevos medicamentos con su información correspondiente.
-   
-2. Consulta de medicamentos: permite visualizar los medicamentos registrados y sus horarios.
-   
-3. Edición de medicamentos: permite modificar información previamente registrada.
-   
-4. Eliminación: permite eliminar medicamentos que ya no sean necesarios dentro de la aplicación.
-   
-5. Control de tomas: permite registrar si una dosis fue tomada, quedó pendiente o fue omitida.
-    
-6. Recordatorios: permite avisar al usuario cuando se aproxime el horario establecido para una dosis.
-    
-7. Historial: permite consultar las tomas registradas anteriormente.
-    
-8. Control de cantidad: como una función adicional, podría permitir registrar la cantidad disponible de un medicamento y advertir cuando queden pocas dosis.
-    
-El desarrollo comenzará con las funciones esenciales de registro y consulta, dejando las funciones más avanzadas, como notificaciones e historial detallado, para etapas posteriores. De esta manera, el proyecto podrá desarrollarse de forma progresiva y adaptarse al nivel de experiencia adquirido durante el curso.
+El diseño de MediTrack parte de la planificación de las pantallas y de la organización de los elementos necesarios para registrar y consultar medicamentos. Los wireframes iniciales sirvieron como referencia para definir la distribución de los formularios y la navegación de la aplicación.
 
-# Diseño
+Las pantallas contempladas en el proyecto son:
 
-Diseño de interfaz: el diseño presentado representa una propuesta inicial de la estructura de la aplicación. Su propósito es definir la distribución de los elementos y el flujo de navegación antes de implementar el diseño visual definitivo.
+- **Pantalla principal:** muestra la lista de medicamentos registrados.
+  
+  <img width="542" height="1210" alt="Pantalla principal" src="https://github.com/user-attachments/assets/3c6623ca-a3ec-4e4b-9e2e-c0e2e4c9ef69" />
 
-De derecha a izquierda:
+- **Formulario para agregar medicamentos:** permite introducir los datos necesarios para crear un registro.
+  
+  <img width="494" height="1094" alt="Formulario para agregar medicamentos" src="https://github.com/user-attachments/assets/e92c78b6-9adf-4bf3-865b-2bfecc14c40f" />
 
-• Pantalla de inicio
+- **Lista de medicamentos:** además de mostrar los medicamentos registrados, permite realizar acciones sobre cada uno. El usuario puede marcar un medicamento como tomado, omitir una toma cuando no se realizará en ese momento o eliminar el medicamento de la lista.
 
-• Agregar medicamento
+  <img width="492" height="1092" alt="Lista de medicamentos" src="https://github.com/user-attachments/assets/15dd72c8-03ed-4432-996a-e6d89a4654a7" />
 
-• Lista de medicamento
+- **Historial de tomas:** facilita la consulta de los registros disponibles.
 
-• Historial de tomas
+  <img width="492" height="1092" alt="Historial de tomas" src="https://github.com/user-attachments/assets/0bb12dff-1eef-477f-a885-63ce5f3c931d" />
 
-• Pantalla de administrador
+- **Pantalla de administrador:** propuesta para futuras ampliaciones.
 
-<img width="2195" height="812" alt="Diseño App" src="https://github.com/user-attachments/assets/b5fdd667-b35e-489d-944d-c7675ad90869" />
+Durante el desarrollo, el diseño inicial se fue adaptando para integrar las funciones de almacenamiento y notificaciones. Se priorizó una interfaz sencilla que permitiera utilizar las funciones principales sin añadir complejidad innecesaria.
 
-## Registro de cambios (Changelog)
+## 7. Registro de cambios (Changelog)
 
-Esta sección presenta las actualizaciones realizadas, las mejoras que se encuentran actualmente en desarrollo y las funcionalidades que se tienen previstas para las siguientes etapas del proyecto MediTrack.
+El siguiente registro resume la evolución de MediTrack desde su planificación inicial hasta su estado actual.
 
-### Cambios pasados
+### 7.1. Cambios pasados
 
-* Se definió el concepto general de MediTrack como una aplicación móvil para el control y recordatorio de medicamentos.
-* Se establecieron los datos principales que podrá registrar el usuario: nombre del medicamento, dosis, unidad, hora, frecuencia, fecha de inicio y fecha de finalización.
-* Se diseñó la estructura inicial de las pantallas de la aplicación mediante wireframes.
-* Se configuró el proyecto en Android Studio utilizando Kotlin y Jetpack Compose.
-* Se estableció el nombre del proyecto como MediTrack y el paquete de la aplicación como `com.jorge.meditrack`.
-* Se configuró el proyecto para utilizar como versión mínima Android 7.0 (API 24).
-* Se creó la primera versión de la pantalla principal, incluyendo el nombre de la aplicación, la sección de próxima toma y el botón para agregar medicamentos.
-* Se desarrolló la pantalla para agregar medicamentos.
-* Se incorporaron selectores para la hora y las fechas de inicio y finalización.
-* Se incorporaron opciones para seleccionar la unidad del medicamento y la frecuencia de administración.
-* Se implementó la validación básica de los campos principales antes de guardar un medicamento.
-* Se implementó el registro de varios medicamentos durante la ejecución de la aplicación.
-* Se creó una sección de "Mis medicamentos" para visualizar los medicamentos registrados.
-* Se agregó la opción de eliminar medicamentos de la lista.
-* Se creó un repositorio en GitHub para mantener un historial de las versiones y avances del proyecto.
+- Se definió la idea de MediTrack como una aplicación móvil para organizar y recordar la toma de medicamentos.
+- Se identificó el problema relacionado con el olvido de horarios y la organización de las dosis.
+- Se determinaron los datos principales que debía incluir cada registro de medicamento.
+- Se diseñaron los wireframes iniciales para planificar las pantallas.
+- Se configuró el proyecto en Android Studio con Kotlin y Jetpack Compose.
+- Se estableció el paquete `com.jorge.meditrack` y la versión mínima de Android 7.0 (API 24).
+- Se desarrolló la estructura inicial de la interfaz y el formulario para agregar medicamentos.
+- Se incorporaron campos y selectores para introducir las dosis, unidades, horas, frecuencias y fechas.
+- Se implementó la lista principal para mostrar los medicamentos registrados.
+- Se creó el repositorio del proyecto en GitHub para mantener el código y la documentación.
 
-### Cambios actuales
+### 7.2. Cambios actuales
 
-* Se está mejorando la estructura de navegación entre la pantalla principal, el formulario de registro y la lista de medicamentos.
-* Se está revisando la organización de las opciones de frecuencia para evitar alternativas que puedan resultar confusas para el usuario, como "Cada 24 horas" y "Una vez al día".
-* Se está trabajando en mantener una interfaz sencilla y fácil de utilizar, especialmente durante el registro y consulta de medicamentos.
-* Actualmente, los medicamentos se mantienen en memoria durante la ejecución de la aplicación. El almacenamiento permanente todavía se encuentra pendiente de implementación.
+- Se incorporó Room para almacenar los medicamentos de forma persistente en una base de datos local.
+- Se integró el almacenamiento de los registros de tomas para el historial.
+- Se implementó la programación de alarmas para generar recordatorios.
+- Se incorporaron notificaciones con información sobre el medicamento y la dosis registrada.
+- Se conectó la programación de los recordatorios con los datos guardados de cada medicamento.
+- Se realizaron pruebas de funcionamiento y se comprobó que las notificaciones pueden recibirse en el dispositivo de prueba.
+- Se revisó la integración de las frecuencias de los recordatorios.
+- Se actualizó la documentación para reflejar el estado actual de la aplicación y distinguir las funciones implementadas de las mejoras futuras.
 
-### Cambios futuros
+### 7.3. Cambios futuros
 
-* Implementar una base de datos local para almacenar permanentemente los medicamentos registrados.
-* Incorporar la edición de medicamentos existentes.
-* Desarrollar un historial de tomas que permita registrar medicamentos tomados, pendientes u omitidos.
-* Implementar notificaciones para recordar al usuario las horas programadas para cada medicamento.
-* Mejorar la lógica de las frecuencias para generar correctamente las próximas tomas según la configuración de cada medicamento.
-* Desarrollar la pantalla de administración para gestionar la información correspondiente al sistema.
-* Realizar pruebas de funcionamiento y usabilidad en diferentes dispositivos Android.
-* Mejorar progresivamente el diseño visual y la experiencia de usuario.
-* Completar la documentación técnica y preparar la versión final del proyecto para su presentación.
+- Mejorar la lógica de los recordatorios para respetar las fechas de inicio y finalización de cada tratamiento.
+- Comprobar y mejorar la restauración de las alarmas después de reiniciar el dispositivo.
+- Ampliar las pruebas de las diferentes frecuencias y del comportamiento de las notificaciones.
+- Incorporar la edición de medicamentos si se considera necesaria dentro del alcance final.
+- Realizar mejoras visuales y de navegación según los resultados de las pruebas.
+- Evaluar posibles ampliaciones de la interfaz de administrador.
+- Completar las pruebas finales y la documentación para la entrega académica.
+
+## 8. Estado actual del proyecto
+
+MediTrack ha avanzado desde una propuesta inicial hasta una aplicación Android que incorpora el registro y la consulta de medicamentos, el almacenamiento local mediante Room y un sistema de notificaciones para los recordatorios.
+
+También se ha trabajado en el historial de tomas y en la integración de los datos registrados con las alarmas programadas. Las pruebas realizadas han permitido comprobar el funcionamiento básico de las notificaciones, aunque todavía es necesario revisar algunos casos relacionados con las frecuencias y la continuidad de los recordatorios.
+
+En esta etapa, el objetivo principal es mantener estables las funciones implementadas, comprobar su funcionamiento y completar la documentación. Las mejoras adicionales se consideran secundarias frente a la necesidad de entregar una versión funcional y comprensible del proyecto.
+
+## 9. Conclusión
+
+El desarrollo de MediTrack ha permitido aplicar conocimientos de programación Android, diseño de interfaces, almacenamiento local y notificaciones. A través de sus funciones principales, el proyecto busca ofrecer una herramienta sencilla para organizar medicamentos y recordar sus horarios.
+
+La incorporación de Room permite conservar los datos registrados, mientras que las notificaciones aportan una función práctica para el uso cotidiano. Aunque existen oportunidades de mejora, la aplicación cuenta con una base funcional que puede ampliarse en futuras versiones.
+
+El trabajo realizado también ha permitido comprender la importancia de probar las funciones, documentar los cambios y mantener un alcance realista durante el desarrollo de una aplicación móvil.
