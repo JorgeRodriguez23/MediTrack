@@ -127,8 +127,6 @@ El siguiente registro resume la evolución de MediTrack desde su planificación 
 - Ampliar las pruebas de las diferentes frecuencias y del comportamiento de las notificaciones.
 - Incorporar la edición de medicamentos si se considera necesaria dentro del alcance final.
 - Realizar mejoras visuales y de navegación según los resultados de las pruebas.
-- Evaluar posibles ampliaciones de la interfaz de administrador.
-- Completar las pruebas finales y la documentación para la entrega académica.
 
 ## 8. Estado actual del proyecto
 
