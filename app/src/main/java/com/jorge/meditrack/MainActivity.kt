@@ -42,6 +42,10 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
 
 // ============================================================
 // MODELO DE MEDICAMENTO
@@ -62,11 +66,36 @@ data class Medicamento(
 // ACTIVIDAD PRINCIPAL
 // ============================================================
 
+
 class MainActivity : ComponentActivity() {
+
+    private val solicitudPermisoNotificaciones =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { concedido ->
+            if (!concedido) {
+                Toast.makeText(
+                    this,
+                    "Las notificaciones están desactivadas. Puedes habilitarlas en los ajustes de la aplicación.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            checkSelfPermission(
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            solicitudPermisoNotificaciones.launch(
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+        }
 
         setContent {
             MediTrackTheme {
@@ -75,6 +104,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 
 // ============================================================
 // CONTROL GENERAL DE LA APLICACIÓN
@@ -106,6 +136,22 @@ fun MediTrackApp() {
         .collectAsState(initial = emptyList())
 
     val scope = rememberCoroutineScope()
+
+
+    LaunchedEffect(medicamentosGuardados) {
+        medicamentosGuardados.forEach { medicamento ->
+            RecordatorioScheduler.programarRecordatorio(
+                context = context,
+                idMedicamento = medicamento.id,
+                nombre = medicamento.nombre,
+                dosis = medicamento.dosis,
+                unidad = medicamento.unidad,
+                hora = medicamento.hora,
+                frecuencia = medicamento.frecuencia
+            )
+        }
+    }
+
 
     val medicamentos = medicamentosGuardados.map { registro ->
         Medicamento(
@@ -150,7 +196,13 @@ fun MediTrackApp() {
                 onAgregar = {
                     pantallaActual = "agregar"
                 },
+
                 onEliminar = { medicamento ->
+                    RecordatorioScheduler.cancelarRecordatorio(
+                        context = context,
+                        idMedicamento = medicamento.id
+                    )
+
                     scope.launch {
                         medicamentoDao.eliminar(
                             MedicamentoEntity(
@@ -161,12 +213,13 @@ fun MediTrackApp() {
                                 hora = medicamento.hora,
                                 frecuencia = medicamento.frecuencia,
                                 fechaInicio = medicamento.fechaInicio,
-                                fechaFinalizacion =
-                                    medicamento.fechaFinalizacion
+                                fechaFinalizacion = medicamento.fechaFinalizacion
+
                             )
                         )
                     }
                 },
+
                 onRegistrarToma = { medicamento, estado ->
                     scope.launch {
                         tomaDao.insertarToma(
