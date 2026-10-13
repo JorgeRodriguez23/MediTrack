@@ -1,3 +1,4 @@
+
 package com.jorge.meditrack
 
 import android.app.DatePickerDialog
@@ -24,21 +25,23 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.jorge.meditrack.ui.theme.MediTrackTheme
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
-
+import kotlinx.coroutines.launch
 
 // ============================================================
 // MODELO DE MEDICAMENTO
@@ -51,9 +54,9 @@ data class Medicamento(
     val hora: String,
     val frecuencia: String,
     val fechaInicio: String,
-    val fechaFinalizacion: String
+    val fechaFinalizacion: String,
+    val id: Int = 0
 )
-
 
 // ============================================================
 // ACTIVIDAD PRINCIPAL
@@ -73,7 +76,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 // ============================================================
 // CONTROL GENERAL DE LA APLICACIÓN
 // ============================================================
@@ -81,91 +83,155 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MediTrackApp() {
 
-    // Lista general de medicamentos
-    var medicamentos by remember {
-        mutableStateOf(listOf<Medicamento>())
+    val context = LocalContext.current
+
+    val database = remember {
+        MediTrackDatabase.obtenerInstancia(context)
     }
 
-    // Pantalla actual
+    val medicamentoDao = remember {
+        database.medicamentoDao()
+    }
+
+    val tomaDao = remember {
+        database.tomaMedicamentoDao()
+    }
+
+    val medicamentosGuardados by medicamentoDao
+        .obtenerTodos()
+        .collectAsState(initial = emptyList())
+
+    val historial by tomaDao
+        .obtenerHistorial()
+        .collectAsState(initial = emptyList())
+
+    val scope = rememberCoroutineScope()
+
+    val medicamentos = medicamentosGuardados.map { registro ->
+        Medicamento(
+            id = registro.id,
+            nombre = registro.nombre,
+            dosis = registro.dosis,
+            unidad = registro.unidad,
+            hora = registro.hora,
+            frecuencia = registro.frecuencia,
+            fechaInicio = registro.fechaInicio,
+            fechaFinalizacion = registro.fechaFinalizacion
+        )
+    }
+
     var pantallaActual by remember {
         mutableStateOf("inicio")
     }
 
-
     when (pantallaActual) {
 
-        // ----------------------------------------------------
-        // INICIO
-        // ----------------------------------------------------
-
         "inicio" -> {
-
             PantallaPrincipal(
-
                 medicamentos = medicamentos,
-
                 onAgregar = {
                     pantallaActual = "agregar"
                 },
-
                 onVerMedicamentos = {
                     pantallaActual = "lista"
+                },
+                onVerHistorial = {
+                    pantallaActual = "historial"
                 }
             )
         }
 
-
-        // ----------------------------------------------------
-        // LISTA DE MEDICAMENTOS
-        // ----------------------------------------------------
-
         "lista" -> {
-
             PantallaListaMedicamentos(
-
                 medicamentos = medicamentos,
-
                 onVolver = {
                     pantallaActual = "inicio"
                 },
-
                 onAgregar = {
                     pantallaActual = "agregar"
                 },
-
                 onEliminar = { medicamento ->
+                    scope.launch {
+                        medicamentoDao.eliminar(
+                            MedicamentoEntity(
+                                id = medicamento.id,
+                                nombre = medicamento.nombre,
+                                dosis = medicamento.dosis,
+                                unidad = medicamento.unidad,
+                                hora = medicamento.hora,
+                                frecuencia = medicamento.frecuencia,
+                                fechaInicio = medicamento.fechaInicio,
+                                fechaFinalizacion =
+                                    medicamento.fechaFinalizacion
+                            )
+                        )
+                    }
+                },
+                onRegistrarToma = { medicamento, estado ->
+                    scope.launch {
+                        tomaDao.insertarToma(
+                            TomaMedicamentoEntity(
+                                nombreMedicamento = medicamento.nombre,
+                                dosis = medicamento.dosis,
+                                unidad = medicamento.unidad,
+                                horaProgramada = medicamento.hora,
+                                fechaHoraRegistro =
+                                    System.currentTimeMillis(),
+                                estado = estado
+                            )
+                        )
+                    }
 
-                    medicamentos = medicamentos.filter {
-                        it != medicamento
+                    Toast.makeText(
+                        context,
+                        "Registro guardado: $estado",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
+        }
+
+        "agregar" -> {
+            PantallaAgregarMedicamento(
+                onVolver = {
+                    pantallaActual = "inicio"
+                },
+                onGuardar = { nuevoMedicamento ->
+                    scope.launch {
+                        medicamentoDao.insertar(
+                            MedicamentoEntity(
+                                nombre = nuevoMedicamento.nombre,
+                                dosis = nuevoMedicamento.dosis,
+                                unidad = nuevoMedicamento.unidad,
+                                hora = nuevoMedicamento.hora,
+                                frecuencia = nuevoMedicamento.frecuencia,
+                                fechaInicio = nuevoMedicamento.fechaInicio,
+                                fechaFinalizacion =
+                                    nuevoMedicamento.fechaFinalizacion
+                            )
+                        )
+
+                        pantallaActual = "lista"
                     }
                 }
             )
         }
 
-
-        // ----------------------------------------------------
-        // AGREGAR MEDICAMENTO
-        // ----------------------------------------------------
-
-        "agregar" -> {
-
-            PantallaAgregarMedicamento(
-
+        "historial" -> {
+            PantallaHistorialTomas(
+                historial = historial,
                 onVolver = {
                     pantallaActual = "inicio"
                 },
-
-                onGuardar = { nuevoMedicamento ->
-
-                    medicamentos = medicamentos + nuevoMedicamento
-
-                    pantallaActual = "lista"
+                onEliminarRegistro = { registro ->
+                    scope.launch {
+                        tomaDao.eliminarToma(registro.id)
+                    }
                 }
             )
         }
     }
 }
-
 
 // ============================================================
 // PANTALLA PRINCIPAL
@@ -175,22 +241,18 @@ fun MediTrackApp() {
 fun PantallaPrincipal(
     medicamentos: List<Medicamento>,
     onAgregar: () -> Unit,
-    onVerMedicamentos: () -> Unit
+    onVerMedicamentos: () -> Unit,
+    onVerHistorial: () -> Unit
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
         Spacer(modifier = Modifier.height(40.dp))
-
-
-        // ----------------------------------------------------
-        // TÍTULO
-        // ----------------------------------------------------
 
         Text(
             text = "MediTrack",
@@ -206,11 +268,6 @@ fun PantallaPrincipal(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-
-        // ----------------------------------------------------
-        // PRÓXIMA TOMA
-        // ----------------------------------------------------
-
         Text(
             text = "Próxima toma",
             style = MaterialTheme.typography.titleLarge
@@ -218,25 +275,13 @@ fun PantallaPrincipal(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-
         if (medicamentos.isEmpty()) {
-
-            Text(
-                text = "💊 No hay medicamentos registrados todavía"
-            )
-
+            Text("💊 No hay medicamentos registrados todavía")
         } else {
-
             val proximo = medicamentos.first()
 
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = "💊 ${proximo.nombre}",
                         style = MaterialTheme.typography.titleMedium
@@ -244,28 +289,14 @@ fun PantallaPrincipal(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = "${proximo.dosis} ${proximo.unidad}"
-                    )
-
-                    Text(
-                        text = "Hora: ${proximo.hora}"
-                    )
-
-                    Text(
-                        text = proximo.frecuencia
-                    )
+                    Text("${proximo.dosis} ${proximo.unidad}")
+                    Text("Hora: ${proximo.hora}")
+                    Text(proximo.frecuencia)
                 }
             }
         }
 
-
         Spacer(modifier = Modifier.height(32.dp))
-
-
-        // ----------------------------------------------------
-        // BOTÓN LISTA
-        // ----------------------------------------------------
 
         OutlinedButton(
             onClick = onVerMedicamentos,
@@ -274,13 +305,7 @@ fun PantallaPrincipal(
             Text("Ver mis medicamentos")
         }
 
-
         Spacer(modifier = Modifier.height(12.dp))
-
-
-        // ----------------------------------------------------
-        // BOTÓN AGREGAR
-        // ----------------------------------------------------
 
         Button(
             onClick = onAgregar,
@@ -288,9 +313,17 @@ fun PantallaPrincipal(
         ) {
             Text("Agregar medicamento")
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedButton(
+            onClick = onVerHistorial,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Historial de tomas")
+        }
     }
 }
-
 
 // ============================================================
 // PANTALLA LISTA DE MEDICAMENTOS
@@ -301,19 +334,14 @@ fun PantallaListaMedicamentos(
     medicamentos: List<Medicamento>,
     onVolver: () -> Unit,
     onAgregar: () -> Unit,
-    onEliminar: (Medicamento) -> Unit
+    onEliminar: (Medicamento) -> Unit,
+    onRegistrarToma: (Medicamento, String) -> Unit
 ) {
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp)
     ) {
-
-
-        // ----------------------------------------------------
-        // ENCABEZADO
-        // ----------------------------------------------------
 
         Text(
             text = "← Mis medicamentos",
@@ -325,7 +353,6 @@ fun PantallaListaMedicamentos(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-
         Text(
             text = "Lista de medicamentos",
             style = MaterialTheme.typography.titleLarge
@@ -333,13 +360,7 @@ fun PantallaListaMedicamentos(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
-        // ----------------------------------------------------
-        // LISTA
-        // ----------------------------------------------------
-
         if (medicamentos.isEmpty()) {
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -347,56 +368,42 @@ fun PantallaListaMedicamentos(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-
-                Text(
-                    text = "💊"
-                )
-
+                Text("💊")
                 Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "No hay medicamentos registrados."
-                )
+                Text("No hay medicamentos registrados.")
             }
-
         } else {
-
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-
                 items(medicamentos) { medicamento ->
-
                     TarjetaMedicamento(
                         medicamento = medicamento,
-
                         onEliminar = {
                             onEliminar(medicamento)
+                        },
+                        onTomado = {
+                            onRegistrarToma(medicamento, "Tomado")
+                        },
+                        onOmitido = {
+                            onRegistrarToma(medicamento, "Omitido")
                         }
                     )
                 }
             }
         }
 
-
         Spacer(modifier = Modifier.height(16.dp))
-
-
-        // ----------------------------------------------------
-        // AGREGAR
-        // ----------------------------------------------------
 
         Button(
             onClick = onAgregar,
             modifier = Modifier.fillMaxWidth()
         ) {
-
             Text("Agregar medicamento")
         }
     }
 }
-
 
 // ============================================================
 // TARJETA DE MEDICAMENTO
@@ -405,18 +412,13 @@ fun PantallaListaMedicamentos(
 @Composable
 fun TarjetaMedicamento(
     medicamento: Medicamento,
-    onEliminar: () -> Unit
+    onEliminar: () -> Unit,
+    onTomado: () -> Unit,
+    onOmitido: () -> Unit
 ) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
 
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-
-            // Nombre
             Text(
                 text = "💊 ${medicamento.nombre}",
                 style = MaterialTheme.typography.titleMedium
@@ -424,58 +426,179 @@ fun TarjetaMedicamento(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            Text("Dosis: ${medicamento.dosis} ${medicamento.unidad}")
+            Text("Hora: ${medicamento.hora}")
+            Text("Frecuencia: ${medicamento.frecuencia}")
 
-            // Dosis
-            Text(
-                text = "Dosis: ${medicamento.dosis} ${medicamento.unidad}"
-            )
-
-
-            // Hora
-            Text(
-                text = "Hora: ${medicamento.hora}"
-            )
-
-
-            // Frecuencia
-            Text(
-                text = "Frecuencia: ${medicamento.frecuencia}"
-            )
-
-
-            // Fecha de inicio
             if (medicamento.fechaInicio.isNotBlank()) {
-
-                Text(
-                    text = "Inicio: ${medicamento.fechaInicio}"
-                )
+                Text("Inicio: ${medicamento.fechaInicio}")
             }
 
-
-            // Fecha final
             if (medicamento.fechaFinalizacion.isNotBlank()) {
-
-                Text(
-                    text = "Finalización: ${medicamento.fechaFinalizacion}"
-                )
+                Text("Finalización: ${medicamento.fechaFinalizacion}")
             }
-
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            Button(
+                onClick = onTomado,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Tomado")
+            }
 
-            // Eliminar
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = onOmitido,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Omitido")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             OutlinedButton(
                 onClick = onEliminar,
                 modifier = Modifier.fillMaxWidth()
             ) {
-
-                Text("Eliminar")
+                Text("Eliminar medicamento")
             }
         }
     }
 }
 
+// ============================================================
+// PANTALLA HISTORIAL DE TOMAS
+// ============================================================
+
+@Composable
+fun PantallaHistorialTomas(
+    historial: List<TomaMedicamentoEntity>,
+    onVolver: () -> Unit,
+    onEliminarRegistro: (TomaMedicamentoEntity) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+    ) {
+
+        Text(
+            text = "← Historial de tomas",
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.clickable {
+                onVolver()
+            }
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Registros anteriores",
+            style = MaterialTheme.typography.titleLarge
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (historial.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("📋")
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Todavía no hay tomas registradas.")
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Registra una toma desde la lista de medicamentos.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(historial, key = { it.id }) { registro ->
+                    TarjetaHistorial(
+                        registro = registro,
+                        onEliminar = {
+                            onEliminarRegistro(registro)
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedButton(
+            onClick = onVolver,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Volver al inicio")
+        }
+    }
+}
+
+// ============================================================
+// TARJETA DE REGISTRO DEL HISTORIAL
+// ============================================================
+
+@Composable
+fun TarjetaHistorial(
+    registro: TomaMedicamentoEntity,
+    onEliminar: () -> Unit
+) {
+    val formato = remember {
+        SimpleDateFormat("dd/MM/yyyy 'a las' hh:mm a", Locale.getDefault())
+    }
+
+    val fechaFormateada = remember(registro.fechaHoraRegistro) {
+        formato.format(Date(registro.fechaHoraRegistro))
+    }
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+
+            Text(
+                text = "💊 ${registro.nombreMedicamento}",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text("Dosis: ${registro.dosis} ${registro.unidad}")
+            Text("Hora programada: ${registro.horaProgramada}")
+            Text("Fecha del registro: $fechaFormateada")
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Estado: ${registro.estado}",
+                style = MaterialTheme.typography.titleSmall,
+                color = if (registro.estado == "Tomado") {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.error
+                }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = onEliminar,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Eliminar registro")
+            }
+        }
+    }
+}
 
 // ============================================================
 // PANTALLA AGREGAR MEDICAMENTO
@@ -486,50 +609,16 @@ fun PantallaAgregarMedicamento(
     onVolver: () -> Unit,
     onGuardar: (Medicamento) -> Unit
 ) {
-
     val context = LocalContext.current
 
-
-    // --------------------------------------------------------
-    // VARIABLES
-    // --------------------------------------------------------
-
-    var nombre by remember {
-        mutableStateOf("")
-    }
-
-    var dosis by remember {
-        mutableStateOf("")
-    }
-
-    var unidad by remember {
-        mutableStateOf("Pastilla")
-    }
-
-    var hora by remember {
-        mutableStateOf("")
-    }
-
-    var frecuencia by remember {
-        mutableStateOf("Cada 24 horas")
-    }
-
-    var fechaInicio by remember {
-        mutableStateOf("")
-    }
-
-    var fechaFinalizacion by remember {
-        mutableStateOf("")
-    }
-
-    var fechaInicioMillis by remember {
-        mutableStateOf<Long?>(null)
-    }
-
-
-    // --------------------------------------------------------
-    // OPCIONES
-    // --------------------------------------------------------
+    var nombre by remember { mutableStateOf("") }
+    var dosis by remember { mutableStateOf("") }
+    var unidad by remember { mutableStateOf("Pastilla") }
+    var hora by remember { mutableStateOf("") }
+    var frecuencia by remember { mutableStateOf("Cada 24 horas") }
+    var fechaInicio by remember { mutableStateOf("") }
+    var fechaFinalizacion by remember { mutableStateOf("") }
+    var fechaInicioMillis by remember { mutableStateOf<Long?>(null) }
 
     val unidades = listOf(
         "Pastilla",
@@ -546,23 +635,8 @@ fun PantallaAgregarMedicamento(
         "Días alternos"
     )
 
-
-    // --------------------------------------------------------
-    // MENÚS
-    // --------------------------------------------------------
-
-    var unidadExpandida by remember {
-        mutableStateOf(false)
-    }
-
-    var frecuenciaExpandida by remember {
-        mutableStateOf(false)
-    }
-
-
-    // --------------------------------------------------------
-    // FORMULARIO
-    // --------------------------------------------------------
+    var unidadExpandida by remember { mutableStateOf(false) }
+    var frecuenciaExpandida by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -570,11 +644,6 @@ fun PantallaAgregarMedicamento(
             .verticalScroll(rememberScrollState())
             .padding(24.dp)
     ) {
-
-
-        // ----------------------------------------------------
-        // VOLVER
-        // ----------------------------------------------------
 
         Text(
             text = "← Agregar medicamento",
@@ -586,96 +655,55 @@ fun PantallaAgregarMedicamento(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-
-        // ----------------------------------------------------
-        // NOMBRE
-        // ----------------------------------------------------
-
         OutlinedTextField(
             value = nombre,
-            onValueChange = {
-                nombre = it
-            },
-            label = {
-                Text("Nombre")
-            },
-            placeholder = {
-                Text("Ej. Paracetamol")
-            },
+            onValueChange = { nombre = it },
+            label = { Text("Nombre") },
+            placeholder = { Text("Ej. Paracetamol") },
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-
-        // ----------------------------------------------------
-        // DOSIS
-        // ----------------------------------------------------
-
-        Text(
-            text = "Dosis",
-            style = MaterialTheme.typography.titleMedium
-        )
+        Text("Dosis", style = MaterialTheme.typography.titleMedium)
 
         Spacer(modifier = Modifier.height(8.dp))
 
-
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Row(modifier = Modifier.fillMaxWidth()) {
 
             OutlinedTextField(
                 value = dosis,
-                onValueChange = {
-                    dosis = it
-                },
-                placeholder = {
-                    Text("1")
-                },
+                onValueChange = { dosis = it },
+                placeholder = { Text("1") },
                 modifier = Modifier.weight(1f)
             )
 
             Spacer(modifier = Modifier.width(8.dp))
 
-
-            // Unidad
-            Box(
-                modifier = Modifier.weight(1f)
-            ) {
+            Box(modifier = Modifier.weight(1f)) {
 
                 OutlinedTextField(
                     value = unidad,
                     onValueChange = {},
                     readOnly = true,
-                    label = {
-                        Text("Unidad")
-                    },
+                    label = { Text("Unidad") },
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .clickable {
-                            unidadExpandida = true
-                        }
+                        .clickable { unidadExpandida = true }
                 )
 
                 DropdownMenu(
                     expanded = unidadExpandida,
-                    onDismissRequest = {
-                        unidadExpandida = false
-                    }
+                    onDismissRequest = { unidadExpandida = false }
                 ) {
-
                     unidades.forEach { opcion ->
-
                         DropdownMenuItem(
-                            text = {
-                                Text(opcion)
-                            },
+                            text = { Text(opcion) },
                             onClick = {
-
                                 unidad = opcion
                                 unidadExpandida = false
                             }
@@ -685,33 +713,19 @@ fun PantallaAgregarMedicamento(
             }
         }
 
-
         Spacer(modifier = Modifier.height(16.dp))
 
-
-        // ----------------------------------------------------
-        // HORA
-        // ----------------------------------------------------
-
-        Text(
-            text = "Hora",
-            style = MaterialTheme.typography.titleMedium
-        )
+        Text("Hora", style = MaterialTheme.typography.titleMedium)
 
         Spacer(modifier = Modifier.height(8.dp))
 
-
-        Box(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
 
             OutlinedTextField(
                 value = hora,
                 onValueChange = {},
                 readOnly = true,
-                placeholder = {
-                    Text("08:00 PM")
-                },
+                placeholder = { Text("08:00 PM") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -719,16 +733,13 @@ fun PantallaAgregarMedicamento(
                 modifier = Modifier
                     .matchParentSize()
                     .clickable {
-
                         val calendario = Calendar.getInstance()
 
                         TimePickerDialog(
                             context,
                             { _, hourOfDay, minute ->
-
                                 val amPm =
-                                    if (hourOfDay >= 12) "PM"
-                                    else "AM"
+                                    if (hourOfDay >= 12) "PM" else "AM"
 
                                 val hora12 = when {
                                     hourOfDay == 0 -> 12
@@ -752,25 +763,13 @@ fun PantallaAgregarMedicamento(
             )
         }
 
-
         Spacer(modifier = Modifier.height(16.dp))
 
-
-        // ----------------------------------------------------
-        // FRECUENCIA
-        // ----------------------------------------------------
-
-        Text(
-            text = "Frecuencia",
-            style = MaterialTheme.typography.titleMedium
-        )
+        Text("Frecuencia", style = MaterialTheme.typography.titleMedium)
 
         Spacer(modifier = Modifier.height(8.dp))
 
-
-        Box(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
 
             OutlinedTextField(
                 value = frecuencia,
@@ -782,26 +781,17 @@ fun PantallaAgregarMedicamento(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .clickable {
-                        frecuenciaExpandida = true
-                    }
+                    .clickable { frecuenciaExpandida = true }
             )
 
             DropdownMenu(
                 expanded = frecuenciaExpandida,
-                onDismissRequest = {
-                    frecuenciaExpandida = false
-                }
+                onDismissRequest = { frecuenciaExpandida = false }
             ) {
-
                 frecuencias.forEach { opcion ->
-
                     DropdownMenuItem(
-                        text = {
-                            Text(opcion)
-                        },
+                        text = { Text(opcion) },
                         onClick = {
-
                             frecuencia = opcion
                             frecuenciaExpandida = false
                         }
@@ -810,33 +800,19 @@ fun PantallaAgregarMedicamento(
             }
         }
 
-
         Spacer(modifier = Modifier.height(16.dp))
 
-
-        // ----------------------------------------------------
-        // FECHA DE INICIO
-        // ----------------------------------------------------
-
-        Text(
-            text = "Fecha de inicio",
-            style = MaterialTheme.typography.titleMedium
-        )
+        Text("Fecha de inicio", style = MaterialTheme.typography.titleMedium)
 
         Spacer(modifier = Modifier.height(8.dp))
 
-
-        Box(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
 
             OutlinedTextField(
                 value = fechaInicio,
                 onValueChange = {},
                 readOnly = true,
-                placeholder = {
-                    Text("26 / 08 / 2026")
-                },
+                placeholder = { Text("26 / 08 / 2026") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -844,13 +820,11 @@ fun PantallaAgregarMedicamento(
                 modifier = Modifier
                     .matchParentSize()
                     .clickable {
-
                         val calendario = Calendar.getInstance()
 
                         DatePickerDialog(
                             context,
                             { _, year, month, dayOfMonth ->
-
                                 fechaInicio = String.format(
                                     Locale.getDefault(),
                                     "%02d / %02d / %04d",
@@ -859,9 +833,8 @@ fun PantallaAgregarMedicamento(
                                     year
                                 )
 
-                                val fechaSeleccionada =
+                                val seleccionada =
                                     Calendar.getInstance().apply {
-
                                         set(
                                             year,
                                             month,
@@ -870,16 +843,10 @@ fun PantallaAgregarMedicamento(
                                             0,
                                             0
                                         )
-
-                                        set(
-                                            Calendar.MILLISECOND,
-                                            0
-                                        )
+                                        set(Calendar.MILLISECOND, 0)
                                     }
 
-                                fechaInicioMillis =
-                                    fechaSeleccionada.timeInMillis
-
+                                fechaInicioMillis = seleccionada.timeInMillis
                                 fechaFinalizacion = ""
                             },
                             calendario.get(Calendar.YEAR),
@@ -890,33 +857,22 @@ fun PantallaAgregarMedicamento(
             )
         }
 
-
         Spacer(modifier = Modifier.height(16.dp))
 
-
-        // ----------------------------------------------------
-        // FECHA FINAL
-        // ----------------------------------------------------
-
         Text(
-            text = "Fecha de finalización",
+            "Fecha de finalización",
             style = MaterialTheme.typography.titleMedium
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-
-        Box(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
 
             OutlinedTextField(
                 value = fechaFinalizacion,
                 onValueChange = {},
                 readOnly = true,
-                placeholder = {
-                    Text("26 / 09 / 2026")
-                },
+                placeholder = { Text("26 / 09 / 2026") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -924,13 +880,11 @@ fun PantallaAgregarMedicamento(
                 modifier = Modifier
                     .matchParentSize()
                     .clickable {
-
                         val calendario = Calendar.getInstance()
 
                         DatePickerDialog(
                             context,
                             { _, year, month, dayOfMonth ->
-
                                 fechaFinalizacion = String.format(
                                     Locale.getDefault(),
                                     "%02d / %02d / %04d",
@@ -943,41 +897,29 @@ fun PantallaAgregarMedicamento(
                             calendario.get(Calendar.MONTH),
                             calendario.get(Calendar.DAY_OF_MONTH)
                         ).apply {
-
                             fechaInicioMillis?.let {
                                 datePicker.minDate = it
                             }
-
                         }.show()
                     }
             )
         }
 
-
         Spacer(modifier = Modifier.height(32.dp))
-
-
-        // ----------------------------------------------------
-        // GUARDAR
-        // ----------------------------------------------------
 
         Button(
             onClick = {
-
                 if (
                     nombre.isBlank() ||
                     dosis.isBlank() ||
                     hora.isBlank()
                 ) {
-
                     Toast.makeText(
                         context,
                         "Completa los campos principales",
                         Toast.LENGTH_SHORT
                     ).show()
-
                 } else {
-
                     val medicamento = Medicamento(
                         nombre = nombre,
                         dosis = dosis,
@@ -999,7 +941,6 @@ fun PantallaAgregarMedicamento(
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-
             Text("GUARDAR")
         }
 
